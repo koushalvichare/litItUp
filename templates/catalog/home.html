@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}LIT IT UP - Fashion Redefined{% endblock %}
+
+{% block content %}
+<style>
+  /* --- FULLSCREEN HERO --- */
+  .hero-section { min-height: 100vh; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .hero-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: #000; }
+  .hero-background img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); opacity: 0.6; transition: transform 5s ease-out; }
+  .hero-section:hover .hero-background img { transform: scale(1); }
+  .hero-content { position: relative; z-index: 1; text-align: center; max-width: 900px; padding: 0 20px; }
+  .hero-title { font-family: 'Montserrat', sans-serif; font-size: clamp(3rem, 8vw, 6rem); line-height: 1; font-weight: 800; margin-bottom: 1.5rem; }
+  .hero-subtitle { font-size: clamp(1rem, 2vw, 1.5rem); margin-bottom: 2rem; opacity: 0.9; }
+  .hero-cta { display: inline-block; padding: 1.2rem 3rem; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* --- SECTION STYLES --- */
+  .section { padding: 5rem 0; }
+  .section-title { font-family: 'Montserrat', sans-serif; font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 700; margin-bottom: 3rem; text-align: center; transition: all 0.5s ease; }
+  .section-title:hover { transform: scale(1.05); color: var(--lit-accent); }
+
+  /* --- CARD-LIKE PRODUCT DISPLAY --- */
+  .product-card { background: var(--lit-card); border-radius: 1rem; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+  .product-card:hover { transform: translateY(-10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .product-card img { width: 100%; height: 300px; object-fit: cover; transition: transform 0.5s ease; }
+  .product-card:hover img { transform: scale(1.05); }
+  .product-card-body { padding: 1.5rem; }
+  .product-card-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .product-card-price { font-size: 1.1rem; font-weight: 700; }
+
+  /* --- CATEGORY CARDS --- */
+  .category-card { position: relative; border-radius: 1rem; overflow: hidden; height: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: transform 0.3s ease; }
+  .category-card:hover { transform: scale(1.03); }
+  .category-card img { width: 100%; height: 100%; object-fit: cover; }
+  .category-card-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+  .category-card-title { font-family: 'Montserrat', sans-serif; font-size: 2rem; font-weight: 700; color: white; text-transform: uppercase; }
+
+  /* --- PROMO BANNER --- */
+  .promo-banner { background: var(--lit-gradient); padding: 3rem 1rem; text-align: center; border-radius: 1rem; margin: 4rem 0; box-shadow: 0 5px 20px rgba(255, 111, 97, 0.5); transition: transform 0.5s ease; }
+  .promo-banner:hover { transform: scale(1.02); }
+  .promo-title { font-family: 'Montserrat', sans-serif; font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 800; color: #181a20; margin-bottom: 1rem; }
+  .promo-subtitle { font-size: 1.2rem; color: #181a20; margin-bottom: 2rem; }
+
+  /* --- BENTO GRID FOR PRODUCTS --- */
+  .bento-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
+  @media (min-width: 768px) {
+    .bento-grid { grid-template-columns: repeat(4, 1fr); }
+    .bento-grid .large { grid-column: span 2; grid-row: span 2; }
+    .bento-grid .wide { grid-column: span 2; }
+    .bento-grid .tall { grid-row: span 2; }
+  }
+  @media (max-width: 767px) {
+    .bento-grid { grid-template-columns: 1fr; }
+  }
+
+  /* --- RESPONSIVE GRID --- */
+  @media (max-width: 768px) {
+    .category-grid { grid-template-columns: 1fr; }
+    .product-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+  }
+  @media (min-width: 768px) {
+    .category-grid { grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+    .product-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
+  }
+  @media (min-width: 1024px) {
+    .category-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* --- LAZY LOADING --- */
+  img[data-src] { opacity: 0; transition: opacity 0.5s ease; }
+  img[data-src].loaded { opacity: 1; }
+
+  /* --- CHATBOT STYLES --- */
+  .chatbot-btn { position: fixed; bottom: 20px; right: 20px; background: var(--lit-gradient); color: #181a20; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(255, 111, 97, 0.5); transition: transform 0.3s ease, background 0.3s ease; z-index: 50; }
+  .chatbot-btn:hover { transform: scale(1.1); background: var(--lit-accent); }
+</style>
+
+<!-- Fullscreen Hero Section -->
+<section class="hero-section">
+  <div class="hero-background">
+    <img src="https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" alt="Fashion Hero Image">
+  </div>
+  <div class="hero-content">
+    <h1 class="hero-title lit-gradient-text">IGNITE YOUR STYLE</h1>
+    <p class="hero-subtitle text-white">Discover the hottest trends in fashion at unbeatable prices.</p>
+    <a href="{% url 'product_list' %}" class="hero-cta lit-btn">Shop Now</a>
+  </div>
+</section>
+
+<!-- Shop by Category Section -->
+<section class="section" style="background: var(--lit-bg);">
+  <div class="container mx-auto px-4">
+    <h2 class="section-title lit-gradient-text">Shop by Category</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[200px] md:auto-rows-[400px]">
+      <div class="category-card md:col-span-2 md:row-span-2">
+        <a href="{% url 'product_list' %}?category=Women" class="block relative w-full h-full">
+          <img src="https://images.unsplash.com/photo-1542219550-371ed3f2c7fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Women's Fashion">
+          <div class="category-card-overlay">
+            <h3 class="category-card-title">Women's</h3>
+          </div>
+        </a>
+      </div>
+      <div class="category-card md:col-span-1 md:row-span-1">
+        <a href="{% url 'product_list' %}?category=Men" class="block relative w-full h-full">
+          <img src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Men's Fashion">
+          <div class="category-card-overlay">
+            <h3 class="category-card-title">Men's</h3>
+          </div>
+        </a>
+      </div>
+      <div class="category-card md:col-span-1 md:row-span-1">
+        <a href="{% url 'product_list' %}?category=Accessories" class="block relative w-full h-full">
+          <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Accessories">
+          <div class="category-card-overlay">
+            <h3 class="category-card-title">Accessories</h3>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Promo Banner -->
+<section class="container mx-auto px-4">
+  <div class="promo-banner" id="dynamicPromoBanner">
+    <h2 class="promo-title">SUMMER SALE - UP TO 70% OFF</h2>
+    <p class="promo-subtitle">Limited time offer. Don't miss out on the hottest deals of the season!</p>
+    <a href="{% url 'product_list' %}" class="lit-btn" style="background: #181a20; color: var(--lit-accent);">Shop Sale</a>
+    <!-- Dynamic content will be injected here via Gemini API -->
+    <div id="dynamicPromoContent" class="text-sm text-gray-800 mt-2"></div>
+  </div>
+</section>
+
+<!-- Featured Products Section -->
+<section class="section" style="background: var(--lit-bg);">
+  <div class="container mx-auto px-4">
+    <h2 class="section-title lit-gradient-text">Featured Products</h2>
+    <div class="bento-grid">
+      {% for product in products|slice:':8' %}
+      <div class="product-card {% if forloop.counter == 1 %}large{% elif forloop.counter == 3 %}wide{% elif forloop.counter == 5 %}tall{% endif %}">
+        <a href="{% url 'product_detail' product.pr_id %}" class="block">
+          <img data-src="{{ product.pr_images.url }}" alt="{{ product.pr_name }}" class="lazy-load">
+          <div class="product-card-body">
+            <h3 class="product-card-title text-white">{{ product.pr_name }}</h3>
+            <p class="product-card-price lit-gradient-text">${{ product.pr_price }}</p>
+          </div>
+        </a>
+      </div>
+      {% empty %}
+      <p class="text-center text-gray-400 col-span-full">No featured products available at the moment.</p>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-8">
+      <a href="{% url 'product_list' %}" class="lit-btn">View All Products</a>
+    </div>
+  </div>
+</section>
+
+<!-- Trending Now Section -->
+<section class="section" style="background: var(--lit-card);">
+  <div class="container mx-auto px-4">
+    <h2 class="section-title lit-gradient-text">Trending Now</h2>
+    <div class="bento-grid">
+      {% for product in products|slice:'8:16' %}
+      <div class="product-card {% if forloop.counter == 1 %}large{% elif forloop.counter == 4 %}wide{% elif forloop.counter == 6 %}tall{% endif %}">
+        <a href="{% url 'product_detail' product.pr_id %}" class="block">
+          <img data-src="{{ product.pr_images.url }}" alt="{{ product.pr_name }}" class="lazy-load">
+          <div class="product-card-body">
+            <h3 class="product-card-title text-white">{{ product.pr_name }}</h3>
+            <p class="product-card-price lit-gradient-text">${{ product.pr_price }}</p>
+          </div>
+        </a>
+      </div>
+      {% empty %}
+      <p class="text-center text-gray-400 col-span-full">No trending products available at the moment.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Recently Viewed Products Section -->
+<section class="section" style="background: var(--lit-bg);">
+  <div class="container mx-auto px-4">
+    <h2 class="section-title lit-gradient-text">Recently Viewed</h2>
+    <div class="product-grid">
+      <!-- This section would be dynamically populated via JavaScript or backend logic -->
+      <p class="text-center text-gray-400 col-span-full">No recently viewed products. Start browsing to see your history here!</p>
+      <!-- Placeholder for actual implementation -->
+    </div>
+  </div>
+</section>
+
+<!-- Newsletter Signup -->
+<section class="section" style="background: var(--lit-bg);">
+  <div class="container mx-auto px-4 text-center">
+    <h2 class="section-title lit-gradient-text">Join the LIT IT UP Tribe</h2>
+    <p class="text-gray-400 mb-6 max-w-2xl mx-auto">Subscribe to our newsletter for exclusive offers, new arrivals, and style tips.</p>
+    <form action="#" method="post" class="max-w-xl mx-auto flex flex-col md:flex-row gap-4">
+      {% csrf_token %}
+      <input type="email" name="email" placeholder="Enter your email" class="input input-bordered flex-grow" required>
+      <button type="submit" class="lit-btn">Subscribe</button>
+      <!-- TODO: Replace '#' with the actual URL pattern for newsletter signup once defined -->
+    </form>
+  </div>
+</section>
+
+<!-- Personalized Recommendations Section (Gemini API Placeholder) -->
+<section class="section" style="background: var(--lit-card);">
+  <div class="container mx-auto px-4">
+    <h2 class="section-title lit-gradient-text">Personalized Picks for You</h2>
+    <div id="personalizedRecommendations" class="bento-grid">
+      <!-- This section would be dynamically populated via Gemini API -->
+      <p class="text-center text-gray-400 col-span-full">Loading personalized recommendations...</p>
+      <!-- Placeholder for actual implementation -->
+    </div>
+    <div class="text-center mt-8">
+      <button onclick="fetchRecommendations()" class="lit-btn">Refresh Recommendations</button>
+    </div>
+    <div class="text-center mt-4">
+      <p class="text-sm text-gray-400">Based on your browsing history and preferences. <a href="#" onclick="customizePreferences()" class="text-primary">Customize Preferences</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- Chatbot Button and Modal (Gemini API Placeholder) -->
+<div class="chatbot-btn" onclick="openChatbot()">
+  <i class="fas fa-robot text-2xl"></i>
+</div>
+
+<div id="chatbotModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-end justify-end z-50">
+  <div class="modal-content bg-base-100 rounded-tl-2xl rounded-bl-2xl w-full md:w-96 h-3/4 overflow-y-auto p-4 relative shadow-xl" style="margin-right: 0; margin-bottom: 0;">
+    <div class="flex justify-between items-center mb-4 sticky top-0 bg-base-100 z-10 py-2">
+      <h3 class="text-xl font-bold text-primary">LIT IT UP AI Assistant</h3>
+      <button onclick="closeChatbot()" class="btn btn-circle btn-sm btn-ghost"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="chatbotMessages" class="space-y-4 mb-4">
+      <div class="chat chat-start">
+        <div class="chat-image avatar">
+          <div class="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
+            <i class="fas fa-robot"></i>
+          </div>
+        </div>
+        <div class="chat-bubble bg-base-200">Hi there! How can I help you today? I can assist with product recommendations, order status, returns, sizing, or any questions about LIT IT UP.</div>
+      </div>
+    </div>
+    <div class="sticky bottom-0 bg-base-100 pt-2">
+      <div class="form-control flex flex-row gap-2">
+        <input type="text" id="chatbotInput" placeholder="Type your message..." class="input input-bordered flex-grow" onkeypress="handleChatbotInput(event)">
+        <button onclick="sendChatbotMessage()" class="btn btn-primary btn-circle"><i class="fas fa-paper-plane"></i></button>
+      </div>
+      <p class="text-xs text-gray-500 mt-1">Powered by Gemini AI</p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // --- HERO ANIMATION ---
+  gsap.timeline()
+    .from(".hero-title", { y: 50, opacity: 0, duration: 1.5, ease: "power4.out" })
+    .from(".hero-subtitle", { y: 30, opacity: 0, duration: 1, ease: "power3.out" }, "-=0.5")
+    .from(".hero-cta", { y: 20, opacity: 0, duration: 0.8, ease: "power3.out" }, "-=0.3");
+
+  // --- LAZY LOADING IMAGES ---
+  const lazyImages = document.querySelectorAll('img[data-src]');
+  const imageObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        img.src = img.dataset.src;
+        img.classList.add('loaded');
+        observer.unobserve(img);
+      }
+    });
+  }, { rootMargin: '0px 0px 200px 0px' });
+
+  lazyImages.forEach(img => imageObserver.observe(img));
+
+  // --- FADE IN SECTIONS ---
+  const sections = document.querySelectorAll('.section');
+  sections.forEach(section => {
+    gsap.from(section, {
+      y: 60,
+      opacity: 0,
+      duration: 1.2,
+      ease: 'power3.out',
+      scrollTrigger: { trigger: section, start: 'top 80%', once: true }
+    });
+  });
+
+  // --- PRODUCT CARD ANIMATION ---
+  const productCards = document.querySelectorAll('.product-card');
+  productCards.forEach((card, index) => {
+    gsap.from(card, {
+      y: 40,
+      opacity: 0,
+      duration: 1,
+      ease: 'power3.out',
+      scrollTrigger: { trigger: card, start: 'top 85%', once: true },
+      delay: index * 0.1
+    });
+  });
+
+  // --- CHATBOT FUNCTION (Placeholder for Gemini API) ---
+  window.openChatbot = function() {
+    const modal = document.getElementById('chatbotModal');
+    modal.classList.remove('hidden');
+    document.getElementById('chatbotInput').focus();
+  };
+
+  window.closeChatbot = function() {
+    const modal = document.getElementById('chatbotModal');
+    modal.classList.add('hidden');
+  };
+
+  window.sendChatbotMessage = function() {
+    const input = document.getElementById('chatbotInput');
+    const messages = document.getElementById('chatbotMessages');
+    const messageText = input.value.trim();
+
+    if (messageText) {
+      // Add user message
+      const userMessage = document.createElement('div');
+      userMessage.className = 'chat chat-end';
+      userMessage.innerHTML = `
+        <div class="chat-image avatar">
+          <div class="w-10 rounded-full bg-accent text-accent-content flex items-center justify-center">
+            <i class="fas fa-user"></i>
+          </div>
+        </div>
+        <div class="chat-bubble bg-primary text-primary-content">${messageText}</div>
+      `;
+      messages.appendChild(userMessage);
+      messages.scrollTop = messages.scrollHeight;
+
+      // Simulate AI response (placeholder for Gemini API call)
+      setTimeout(() => {
+        const aiMessage = document.createElement('div');
+        aiMessage.className = 'chat chat-start';
+        let responseText = "I'm processing your request about \"${messageText}\". In a full implementation, I would call the Gemini API to provide a tailored response. For now, how can I assist further with LIT IT UP products?";
+        // Enhanced response logic based on query type
+        if (messageText.toLowerCase().includes('order status')) {
+          responseText = "I can help with your order status. In a full implementation, I'd fetch your order details using Gemini API. Please provide your order number or check your email for updates. Can I assist with anything else?";
+        } else if (messageText.toLowerCase().includes('return') || messageText.toLowerCase().includes('refund')) {
+          responseText = "Looking to return an item? Our policy allows returns within 30 days of purchase. In a full setup, Gemini API would guide you through the process. For now, please contact support with your order details. Need help with something else?";
+        } else if (messageText.toLowerCase().includes('size') || messageText.toLowerCase().includes('sizing')) {
+          responseText = "I can assist with sizing information. In a complete integration, Gemini API would provide specific size charts based on the product. For now, check the product page for sizing details or ask about a specific item. What else can I help with?";
+        } else if (messageText.toLowerCase().includes('recommend') || messageText.toLowerCase().includes('suggest')) {
+          responseText = "I'd be happy to recommend products! With Gemini API fully integrated, I could suggest items based on your preferences. For now, check out our 'Personalized Picks' section below. Is there a specific category you're interested in?";
+        }
+        aiMessage.innerHTML = `
+          <div class="chat-image avatar">
+            <div class="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
+              <i class="fas fa-robot"></i>
+            </div>
+          </div>
+          <div class="chat-bubble bg-base-200">${responseText}</div>
+        `;
+        messages.appendChild(aiMessage);
+        messages.scrollTop = messages.scrollHeight;
+      }, 1000);
+
+      input.value = '';
+    }
+  };
+
+  window.handleChatbotInput = function(event) {
+    if (event.key === 'Enter') {
+      sendChatbotMessage();
+    }
+  };
+
+  // --- PERSONALIZED RECOMMENDATIONS (Placeholder for Gemini API) ---
+  window.fetchRecommendations = function() {
+    const recommendationsContainer = document.getElementById('personalizedRecommendations');
+    recommendationsContainer.innerHTML = `<p class="text-center text-gray-400 col-span-full">Fetching new recommendations with Gemini AI...</p>`;
+
+    // Simulate API call delay
+    setTimeout(() => {
+      recommendationsContainer.innerHTML = `
+        <p class="text-center text-gray-400 col-span-full">Gemini AI recommendations coming soon! This section will display personalized product picks based on your preferences, browsing history, and past purchases.</p>
+        <!-- In a real implementation, Gemini API would be called to generate product suggestions -->
+      `;
+    }, 1500);
+  };
+
+  // Initialize recommendations on page load (simulated)
+  fetchRecommendations();
+
+  // --- CUSTOMIZE PREFERENCES (Placeholder) ---
+  window.customizePreferences = function() {
+    alert("Customize Preferences feature coming soon! With Gemini API, you'll be able to set style preferences, sizes, and favorite categories for tailored recommendations.");
+  };
+
+  // --- DYNAMIC PROMO CONTENT (Placeholder for Gemini API) ---
+  window.generateDynamicPromo = function() {
+    const promoContent = document.getElementById('dynamicPromoContent');
+    promoContent.innerHTML = `<p>Dynamic content loading...</p>`;
+
+    setTimeout(() => {
+      promoContent.innerHTML = `<p>Personalized offer generated by Gemini AI coming soon! This could be a custom discount or message based on your shopping behavior.</p>`;
+    }, 1000);
+  };
+
+  // Initialize dynamic promo content on load
+  generateDynamicPromo();
+
+  // --- RECENTLY VIEWED PRODUCTS (Placeholder for client-side storage) ---
+  // This would typically use localStorage or cookies to track viewed products
+  // Example placeholder logic:
+  /*
+  function loadRecentlyViewed() {
+    const recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+    if (recentlyViewed.length > 0) {
+      // Dynamically populate the Recently Viewed section with product IDs
+      // Requires backend API to fetch product details based on IDs
+    }
+  }
+  loadRecentlyViewed();
+  */
+});
+</script>
+{% endblock %} 

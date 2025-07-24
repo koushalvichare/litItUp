@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LIT IT UP - Fashion Redefined{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --lit-bg: #0a0a0a;
+        --lit-card: #1a1a1a;
+        --lit-primary: #ff6f61;
+        --lit-accent: #ffcc00;
+        --lit-gradient: linear-gradient(90deg, #ff6f61 0%, #ffcc00 100%);
+        --lit-text: #f0f0f0;
+        --lit-muted: #8c8c8c;
+      }
+      html, body {
+        background: var(--lit-bg);
+        color: var(--lit-text);
+        font-family: 'Inter', 'Montserrat', Arial, sans-serif;
+        min-height: 100vh;
+        overscroll-behavior-y: none;
+      }
+      /* Preloader */
+      .preloader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--lit-bg); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+      .preloader__text { font-family: 'Montserrat'; font-size: 1.5rem; color: var(--lit-primary); }
+      
+      /* Page Transitions */
+      .page-transition-exit { opacity: 0; transition: opacity 0.4s ease-in-out; }
+      
+      /* Custom Cursor */
+      .cursor { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 9999; display: none; }
+      @media (pointer: fine) { .cursor { display: block; } }
+      .cursor__dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--lit-primary); transition: transform 0.2s ease-out, background-color 0.2s, opacity 0.2s; }
+      .cursor.is-active .cursor__dot { transform: scale(5); background-color: var(--lit-accent); opacity: 0.4; }
+
+      /* Other Styles */
+      .lit-gradient-text { background: var(--lit-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-fill-color: transparent; }
+      .lit-btn { background: var(--lit-gradient); color: #181a20; font-weight: 700; border: none; border-radius: 999px; padding: 0.7rem 2.2rem; font-size: 1.1rem; box-shadow: 0 2px 16px #ff6f6133; transition: transform 0.2s, box-shadow 0.2s; }
+      .lit-btn:hover { transform: scale(1.07); box-shadow: 0 4px 32px #ffcc0044; }
+      .lit-card { background: var(--lit-card); border-radius: 1.2rem; box-shadow: 0 2px 24px #00000033; padding: 2rem 1.5rem; margin-bottom: 2rem; }
+      .lit-navbar { background: #1a1a1a99; backdrop-filter: blur(10px); color: var(--lit-text); border-bottom: 1px solid #ffffff1a; font-family: 'Montserrat', sans-serif; position: sticky; top: 0; z-index: 1000; }
+      .lit-footer { background: var(--lit-card); color: var(--lit-muted); border-top: 1px solid #ffffff1a; font-size: 1rem; }
+      .lit-link { color: var(--lit-primary); transition: color 0.2s; }
+      .lit-link:hover { color: var(--lit-accent); }
+    </style>
+</head>
+<body>
+    <div class="preloader">
+        <div class="preloader__text">LIT IT UP</div>
+    </div>
+    <div class="cursor">
+      <div class="cursor__dot"></div>
+    </div>
+    <!-- Navigation Bar -->
+    <div class="navbar lit-navbar shadow-lg">
+        <div class="navbar-start">
+            <a href="{% url 'home' %}" class="btn btn-ghost text-xl lit-gradient-text hover:scale-105 transition-transform">
+                <i class="fas fa-fire" style="color: var(--lit-primary);"></i>
+                <span class="ml-2">LIT IT UP</span>
+            </a>
+        </div>
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1">
+                <li><a href="{% url 'home' %}" class="lit-link">Home</a></li>
+                <li><a href="{% url 'product_list' %}" class="lit-link">Products</a></li>
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'wishlist' %}" class="lit-link">Wishlist</a></li>
+                    <li><a href="{% url 'profile' %}" class="lit-link">Profile</a></li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class="navbar-end">
+            <a href="{% url 'cart_detail' %}" class="btn btn-ghost btn-circle hover:bg-gray-700">
+                <i class="fas fa-shopping-cart"></i>
+            </a>
+            {% if user.is_authenticated %}
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar hover:bg-gray-700">
+                        <div class="w-10 rounded-full">
+                            {% if user.userprofile.avatar %}
+                                <img src="{{ user.userprofile.avatar.url }}" alt="{{ user.username }}" />
+                            {% else %}
+                                <div class="rounded-full w-10 h-10 flex items-center justify-center" style="background: var(--lit-gradient); color: #181a20;">
+                                    <span class="text-lg font-bold">{{ user.username|first|upper }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow rounded-box w-52" style="background: var(--lit-card);">
+                        <li><a href="{% url 'profile' %}" class="lit-link">Profile</a></li>
+                        <li><a href="{% url 'wishlist' %}" class="lit-link">Wishlist</a></li>
+                        <li><a href="{% url 'logout' %}" class="lit-link">Logout</a></li>
+                    </ul>
+                </div>
+            {% else %}
+                <a href="{% url 'login' %}" class="lit-btn ml-2">Login</a>
+                <a href="{% url 'signup' %}" class="lit-btn ml-2" style="background: var(--lit-accent); color: #fff;">Sign Up</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="container mx-auto px-4 mt-4">
+            {% for message in messages %}
+                <div class="alert shadow-lg mb-4 lit-card">
+                    <div>
+                        <i class="fas fa-info-circle"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer footer-center p-10 lit-footer rounded">
+        <nav class="grid grid-flow-col gap-4">
+            <a href="{% url 'home' %}" class="lit-link">Home</a>
+            <a href="{% url 'product_list' %}" class="lit-link">Products</a>
+        </nav>
+        <nav>
+            <div class="grid grid-flow-col gap-4">
+                <a href="#"><i class="fab fa-twitter text-xl"></i></a>
+                <a href="#"><i class="fab fa-instagram text-xl"></i></a>
+                <a href="#"><i class="fab fa-facebook text-xl"></i></a>
+            </div>
+        </nav>
+        <aside>
+            <p>Copyright © 2024 - All rights reserved by LIT IT UP</p>
+        </aside>
+    </footer>
+    
+    <!-- GSAP CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    
+    <script>
+      // --- Global Site Scripts ---
+      document.addEventListener("DOMContentLoaded", () => {
+        // Preloader Animation
+        const preloader = document.querySelector('.preloader');
+        gsap.to(preloader, {
+          opacity: 0,
+          duration: 0.8,
+          delay: 0.5,
+          onComplete: () => preloader.style.display = 'none'
+        });
+        
+        // --- Magnetic Cursor ---
+        if (window.matchMedia("(pointer: fine)").matches) {
+          const cursor = document.querySelector(".cursor");
+          const cursorDot = document.querySelector(".cursor__dot");
+          const interactiveEls = document.querySelectorAll("a, button, [data-magnetic]");
+
+          const pos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+          const mouse = { x: pos.x, y: pos.y };
+          const speed = 0.1;
+
+          const xSet = gsap.quickSetter(cursor, "x", "px");
+          const ySet = gsap.quickSetter(cursor, "y", "px");
+          
+          gsap.ticker.add(() => {
+            const dt = 1.0 - Math.pow(1.0 - speed, gsap.ticker.deltaRatio());
+            pos.x += (mouse.x - pos.x) * dt;
+            pos.y += (mouse.y - pos.y) * dt;
+            xSet(pos.x);
+            ySet(pos.y);
+          });
+
+          window.addEventListener("mousemove", e => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+          });
+
+          interactiveEls.forEach(el => {
+            let magnetism = el.dataset.magnetic || 0.4;
+            let elRect;
+            
+            el.addEventListener("mouseenter", () => {
+              cursor.classList.add("is-active");
+              elRect = el.getBoundingClientRect();
+              gsap.to(el, { x: 0, y: 0, duration: 0.3 });
+            });
+            
+            el.addEventListener("mousemove", (e) => {
+              const x = (e.clientX - elRect.left - elRect.width / 2) * magnetism;
+              const y = (e.clientY - elRect.top - elRect.height / 2) * magnetism;
+              gsap.to(el, { x: x, y: y, duration: 0.3, ease: 'power2.out' });
+            });
+            
+            el.addEventListener("mouseleave", () => {
+              cursor.classList.remove("is-active");
+              gsap.to(el, { x: 0, y: 0, duration: 0.3, ease: 'elastic.out(1, 0.3)' });
+            });
+          });
+        }
+        
+        // --- Page Transitions ---
+        const pageLinks = document.querySelectorAll('a:not([href^="#"]):not([target="_blank"])');
+        pageLinks.forEach(link => {
+          link.addEventListener('click', e => {
+            const destination = link.href;
+            if (destination && destination !== window.location.href) {
+              e.preventDefault();
+              document.body.classList.add('page-transition-exit');
+              setTimeout(() => {
+                window.location.href = destination;
+              }, 400); // match transition duration
+            }
+          });
+        });
+      });
+    </script>
+</body>
+</html>
