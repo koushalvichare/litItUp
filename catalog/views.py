@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Product, UserProfile, Cart, Wishlist, Order, CartItem
+from .models import Product, UserProfile, Cart, Wishlist, Order, CartItem, OrderedItem
 from .forms import UserProfileForm
 import random
 
@@ -120,7 +120,8 @@ def product_list(request):
 def product_detail(request, product_id):
     """Product detail page"""
     product = get_object_or_404(Product, pr_id=product_id)
-    reviews = product.review_set.all().order_by('-created_at')
+    # If you have a Review model, use: reviews = Review.objects.filter(product=product).order_by('-created_at')
+    reviews = []
     
     context = {
         'product': product,
@@ -147,11 +148,11 @@ def add_to_cart(request, product_id):
 def cart(request):
     """View cart and update quantities"""
     cart, created = Cart.objects.get_or_create(user=request.user)
-    cart_items = cart.items.select_related('product').all()
+    cart_items = CartItem.objects.filter(cart=cart).select_related('product')
     total = sum(item.product.pr_price * item.quantity for item in cart_items)
     if request.method == 'POST':
         for item in cart_items:
-            qty = int(request.POST.get(f'quantity_{item.id}', item.quantity))
+            qty = int(request.POST.get(f'quantity_{item.pk}', item.quantity))
             if qty > 0:
                 item.quantity = qty
                 item.save()
@@ -164,6 +165,58 @@ def cart(request):
         'total': total,
     }
     return render(request, 'catalog/cart.html', context)
+# Update cart item quantity
+@login_required
+def update_cart(request, item_id):
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart_item = get_object_or_404(CartItem, pk=item_id, cart=cart)
+    if request.method == 'POST':
+        try:
+            quantity = int(request.POST.get('quantity', 1))
+            if quantity > 0:
+                cart_item.quantity = quantity
+                cart_item.save()
+            else:
+                cart_item.delete()
+        except ValueError:
+            pass
+    return redirect('cart')
+
+# Checkout view
+@login_required
+def checkout(request):
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart_items = CartItem.objects.filter(cart=cart)
+    user_profile = UserProfile.objects.get(user=request.user)
+    if request.method == 'POST':
+        address = request.POST.get('address')
+        phone = request.POST.get('phone')
+        # Update user profile
+        user_profile.address = address
+        user_profile.phone = phone
+        user_profile.save()
+        # Create OrderedItems and Order
+        ordered_items = []
+        total_price = 0
+        for item in cart_items:
+            ordered_item = OrderedItem.objects.create(
+                product=item.product,
+                quantity=item.quantity,
+                price=item.product.pr_price
+            )
+            ordered_items.append(ordered_item)
+            total_price += item.product.pr_price * item.quantity
+        order = Order.objects.create(
+            user=request.user,
+            total_price=total_price
+        )
+        order.items.set(ordered_items)
+        order.save()
+        # Clear cart
+        cart_items.delete()
+        messages.success(request, 'Order placed successfully!')
+        return redirect('profile')
+    return redirect('cart')
 
 @login_required
 def remove_from_cart(request, item_id):

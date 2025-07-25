@@ -1,11 +1,60 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Your Cart</h2>
-<ul>
-    {% for item in cart_items %}
-        <li>{{ item.product.name }} - Quantity: {{ item.quantity }}</li>
-    {% empty %}
-        <li>Your cart is empty.</li>
-    {% endfor %}
-</ul>
+<div class="container mx-auto py-8">
+    <h2 class="text-3xl font-bold mb-8 lit-gradient-text">LIT IT UP - Your Cart</h2>
+    {% if cart_items %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+            <div class="space-y-6">
+                {% for item in cart_items %}
+                <div class="flex items-center bg-base-100 shadow rounded-lg p-4">
+                    <img src="{{ item.product.pr_images.url }}" alt="{{ item.product.pr_name }}" class="w-20 h-20 object-cover rounded-lg mr-4 border border-gray-700">
+                    <div class="flex-1">
+                        <div class="font-bold text-lg">{{ item.product.pr_name }}</div>
+                        <div class="text-sm text-gray-400">{{ item.product.pr_brand }} | {{ item.product.pr_cate }}</div>
+                        <div class="text-xl font-semibold mt-2">${{ item.product.pr_price }}</div>
+                        <div class="mt-2">Quantity: {{ item.quantity }}</div>
+                    </div>
+                    <form method="post" action="{% url 'update_cart' item.pk %}" class="flex items-center ml-4">
+                        {% csrf_token %}
+                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="input input-bordered w-16 mr-2">
+                        <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                    </form>
+                    <form method="post" action="{% url 'remove_from_cart' item.pk %}" class="ml-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-error btn-sm">Remove</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-8 text-right">
+                <span class="text-2xl font-bold">Total: ${{ total }}</span>
+            </div>
+        </div>
+        <div>
+            <div class="bg-base-100 shadow rounded-lg p-6">
+                <h3 class="text-xl font-bold mb-4">Checkout</h3>
+                <form method="post" action="{% url 'checkout' %}">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="block font-semibold mb-2">Address</label>
+                        <textarea name="address" class="textarea textarea-bordered w-full" required>{{ user.userprofile.address }}</textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block font-semibold mb-2">Contact Number</label>
+                        <input type="text" name="phone" class="input input-bordered w-full" value="{{ user.userprofile.phone }}" required>
+                    </div>
+                    <button type="submit" class="btn lit-btn w-full mt-4">Place Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-base-100 shadow rounded-lg p-8 text-center">
+        <i class="fas fa-shopping-cart text-4xl mb-4 text-gray-500"></i>
+        <div class="text-xl font-semibold mb-2">Your cart is empty.</div>
+        <a href="{% url 'product_list' %}" class="btn lit-btn">Shop Now</a>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}
